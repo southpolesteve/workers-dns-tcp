@@ -4,6 +4,14 @@ Cloudflare Workers can accept TCP connections now, so naturally someone had to b
 
 This is an authoritative nameserver in TypeScript. The Worker's `connect(socket)` handler reads DNS queries off the wire and answers from an editable zone. An optional Workers AI binding also lets you use `dig` as an LLM client. You can talk to the Worker on your laptop, or through Spectrum after deploying. [Workers TCP announcement](https://developers.cloudflare.com/changelog/post/2026-11-19-inbound-tcp/)
 
+## Try the live model
+
+```sh
+dig +tcp +short +time=15 +tries=1 @ask.southpolesteve.com why-is-the-sky-blue.ask.southpolesteve.com TXT
+```
+
+Replace `why-is-the-sky-blue` with your question. The first hostname selects the DNS server. The second carries the prompt. Gemma returns its answer in a TXT record.
+
 ## Run it locally
 
 With Node.js 24 or later installed, run these commands from the project directory.
