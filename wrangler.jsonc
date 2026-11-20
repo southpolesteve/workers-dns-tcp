@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "workers-dns-tcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-19",
+  "workers_dev": false,
+  "preview_urls": false,
+  "connect": [{ "protocol": "tcp", "address": "127.0.0.1", "port": 5353 }]
+}
