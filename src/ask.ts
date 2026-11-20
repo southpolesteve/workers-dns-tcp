@@ -21,11 +21,12 @@ async function ask(ai: Ai, name: string, question: string): Promise<Packet> {
   try {
     const result = await ai.run(model, {
       messages: [
-        { role: "system", content: "Answer in one short plain-text sentence. The answer goes in a DNS TXT record." },
+        { role: "system", content: "Answer the user's question directly in one short sentence." },
         { role: "user", content: question },
       ],
       chat_template_kwargs: { enable_thinking: false },
       max_completion_tokens: 64,
+      temperature: 0,
     }, { signal: AbortSignal.timeout(12_000) });
     const text = result.choices[0]?.message.content?.trim();
     if (text) return txtAnswer(name, text.replace(/\s+/g, " "));

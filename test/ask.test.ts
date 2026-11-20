@@ -5,7 +5,7 @@ import { createLookup } from "../src/ask.ts";
 import { answerQuery } from "../src/dns.ts";
 
 const name = "why-is-the-sky-blue.ask.example.test";
-type Run = (model: string, input: { messages: { content: string }[]; max_completion_tokens: number }) => Promise<unknown>;
+type Run = (model: string, input: { messages: { content: string }[]; max_completion_tokens: number; temperature: number }) => Promise<unknown>;
 
 async function query(run?: Run, qname = name, type: RecordType = "TXT", extra: Packet = {}) {
   const lookup = createLookup(run ? { run } as unknown as Ai : undefined);
@@ -22,6 +22,9 @@ test("a TXT lookup runs the bound model and returns one UTF-8-safe TXT RR", asyn
     calls++;
     assert.equal(model, "@cf/google/gemma-4-26b-a4b-it");
     assert.equal(input.messages.at(-1)?.content, "why is the sky blue");
+    // DNS formatting instructions made Gemma return SPF records to unrelated questions.
+    assert.doesNotMatch(input.messages[0]!.content, /\b(?:dns|txt|spf)\b/i);
+    assert.equal(input.temperature, 0);
     assert.equal(input.max_completion_tokens, 64);
     return { choices: [{ message: { content: answer } }] };
   }, name.toUpperCase());
