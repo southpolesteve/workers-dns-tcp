@@ -5,5 +5,12 @@
   "compatibility_date": "2026-11-19",
   "workers_dev": false,
   "preview_urls": false,
-  "connect": [{ "protocol": "tcp", "address": "127.0.0.1", "port": 5353 }]
+  "connect": [{ "protocol": "tcp", "address": "127.0.0.1", "port": 5353 }],
+  "env": {
+    "llm": {
+      "name": "workers-dns-tcp-llm",
+      "ai": { "binding": "AI", "remote": true },
+      "connect": [{ "protocol": "tcp", "address": "127.0.0.1", "port": 5354 }]
+    }
+  }
 }

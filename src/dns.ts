@@ -81,8 +81,11 @@ function frameReply(packet: Packet, opt: OptRecord | undefined) {
   return frame;
 }
 
+type Lookup = (name: string, type: RecordType) => Packet | Promise<Packet>;
 /** Takes one unframed query. Undefined tells the caller to close without a reply. */
-export function answerQuery(bytes: Uint8Array, lookup = authority): Uint8Array | undefined {
+export function answerQuery(bytes: Uint8Array, lookup?: typeof authority): Uint8Array | undefined;
+export function answerQuery(bytes: Uint8Array, lookup: Lookup): Uint8Array | Promise<Uint8Array> | undefined;
+export function answerQuery(bytes: Uint8Array, lookup: Lookup = authority): Uint8Array | Promise<Uint8Array> | undefined {
   if (bytes.length < 12) return;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const id = view.getUint16(0);
@@ -143,7 +146,8 @@ export function answerQuery(bytes: Uint8Array, lookup = authority): Uint8Array |
       return reply({});
     }
     if (signed || (qclass !== 1 && qclass !== 255)) return reply({ rcode: "REFUSED" });
-    return reply(lookup(name.toLowerCase(), type));
+    const result = lookup(name.toLowerCase(), type);
+    return result instanceof Promise ? result.then(reply) : reply(result);
   } catch (error) {
     if (error instanceof FormatError) return reply({ rcode: "FORMERR" });
     throw error;

@@ -1,8 +1,10 @@
 import { answerQuery } from "./dns.ts";
+import { createLookup } from "./ask.ts";
 
 // Consume split prefixes, split bodies and multiple frames in the same read.
 // Only allocate the declared body once, and await each write for backpressure.
-async function connect(socket: Socket) {
+async function connect(socket: Socket, env: Env) {
+  const lookup = createLookup(env.AI);
   const reader = socket.readable.getReader();
   const writer = socket.writable.getWriter();
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -36,7 +38,8 @@ async function connect(socket: Socket) {
           if (length < 12) return;
           target = new Uint8Array(length);
         } else {
-          const response = answerQuery(target);
+          armDeadline(); // Give a completed query its own processing deadline.
+          const response = await answerQuery(target, lookup);
           if (!response) return;
           await writer.write(response);
           target = prefix;
@@ -55,4 +58,4 @@ async function connect(socket: Socket) {
   }
 }
 
-export default { connect } satisfies ExportedHandler;
+export default { connect } satisfies ExportedHandler<Env>;

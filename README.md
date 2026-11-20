@@ -2,7 +2,7 @@
 
 Cloudflare Workers can accept TCP connections now, so naturally someone had to bring DNS to Cloudflare.
 
-This is an authoritative nameserver in TypeScript. The Worker's `connect(socket)` handler reads DNS queries off the wire and answers from an editable zone. You can talk to it with stock `dig` on your laptop, or through Spectrum after deploying. [Workers TCP announcement](https://developers.cloudflare.com/changelog/post/2026-11-19-inbound-tcp/)
+This is an authoritative nameserver in TypeScript. The Worker's `connect(socket)` handler reads DNS queries off the wire and answers from an editable zone. An optional Workers AI binding also lets you use `dig` as an LLM client. You can talk to the Worker on your laptop, or through Spectrum after deploying. [Workers TCP announcement](https://developers.cloudflare.com/changelog/post/2026-11-19-inbound-tcp/)
 
 ## Run it locally
 
@@ -39,6 +39,19 @@ dig +tcp +norecurse @127.0.0.1 -p 5353 _info.example.test TXT
 dig +tcp +norecurse @127.0.0.1 -p 5353 absent.example.test A
 ```
 
+## Ask an LLM with dig
+
+After `npm ci`, sign in to Cloudflare with `npx wrangler login` if needed, then run `npm run dev:llm`. This starts a second local DNS listener on TCP port 5354. The Worker sends questions to Google's Gemma 4 through the remote Workers AI binding. In another terminal, try the query below. The quoted text is from a live run.
+
+```console
+$ dig +tcp +short +time=15 +tries=1 @127.0.0.1 -p 5354 why-is-the-sky-blue.ask.example.test TXT
+"The sky appears blue because of Rayleigh scattering, where shorter blue wavelengths of sunlight are scattered more strongly by the Earth's atmosphere."
+```
+
+Put a question in one DNS label before `.ask.example.test`. Use up to 63 ASCII letters, digits and single hyphens between words. DNS ignores letter case, and the Worker turns hyphens into spaces. Each prompt sent directly to the Worker as a TXT query gets one model call capped at 64 output tokens. The reply is a single TXT record with a 60-second TTL. A model timeout, exhausted quota or empty answer returns SERVFAIL. Query `ask.example.test TXT` for usage without calling the model. Prompts are visible in the DNS query name, including to any resolver you send them through.
+
+The free inference allowance comes from **Workers AI**. Cloudflare includes 10,000 neurons per account per day. Workers Free stops at that limit, while Workers Paid can incur overage. This example uses the native binding without a separate AI Gateway setup. The local demo needs no Spectrum application. A public raw TCP endpoint uses Spectrum and its separate plan requirements. [Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) · [Gemma model](https://developers.cloudflare.com/workers-ai/models/gemma-4-26b-a4b-it/) · [Spectrum plans](https://developers.cloudflare.com/spectrum/protocols-per-plan/)
+
 ## Configure a zone
 
 Edit [src/zone.ts](src/zone.ts). Set the origin, replace the example names and addresses, and increment the SOA serial when changing zone data. Use absolute ASCII names, with an optional final dot, and Punycode for internationalized names. The bundled records use reserved example names and addresses.
@@ -62,7 +75,7 @@ npm run test:tcp  # With npm run dev running, exercise real loopback TCP connect
 
 ## Expose the TCP endpoint
 
-1. Set your Worker name in [wrangler.jsonc](wrangler.jsonc). Sign in with `npx wrangler login`, then run `npm run deploy` to upload the Worker.
+1. Set your Worker name in [wrangler.jsonc](wrangler.jsonc). Sign in with `npx wrangler login`. Run `npm run deploy` for the static DNS server, or `npx wrangler deploy --env llm` for the AI-enabled Worker (`workers-dns-tcp-llm` by default).
 2. In the same account, open **Spectrum** for a Cloudflare-authoritative zone. On Pro or Business, create a **Workers (tcp)** application. With Spectrum Enterprise, create a **TCP** application and select **Worker** as the origin.
 3. Choose a hostname in that zone, select the deployed Worker, and set a single edge port, such as TCP 53 for plain DNS. Use passthrough with edge TLS termination off. The local listener port is independent of the Spectrum edge port.
 4. Query the Spectrum hostname from another machine. For example, with the bundled zone and edge port 53, run `dig +tcp +norecurse @dns.your-domain.example www.example.test A` after replacing the server hostname.

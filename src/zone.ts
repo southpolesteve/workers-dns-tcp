@@ -2,7 +2,7 @@ import type { ResourceRecord } from "@portable/dns-packet";
 import { createAuthority } from "./authority.ts";
 
 // Owners and targets are absolute DNS names. Use ASCII (Punycode for IDNs).
-const origin = "example.test";
+export const origin = "example.test";
 const ns = `ns1.${origin}`;
 const ttl = 300;
 
