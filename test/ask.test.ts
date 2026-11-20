@@ -63,3 +63,26 @@ test("a model error or empty answer gives SERVFAIL with the original transaction
     assert.equal(reply.answers.length, 0);
   }
 });
+
+test("the deployed suffix selects the question and appears in the help record", async () => {
+  const prompts: string[] = [];
+  const lookup = createLookup({ run: async (_model: string, input: { messages: { content: string }[] }) => {
+    prompts.push(input.messages.at(-1)!.content);
+    return { choices: [{ message: { content: "Four." } }] };
+  } } as unknown as Ai, "Ask.Southpolesteve.Com.");
+  const host = "ask.southpolesteve.com";
+  for (const qname of [host, "two-plus-two." + host, "wrong.ask.example.test"]) {
+    const wire = await answerQuery(encode({ questions: [{ name: qname, type: "TXT" }] }), lookup);
+    assert.ok(wire);
+    const result = decode(wire, { framing: "tcp" });
+    if (qname.startsWith("wrong.")) assert.equal(result.rcode, "NXDOMAIN");
+    else {
+      const [record] = result.answers;
+      assert.ok(record?.type === "TXT");
+      const text = new TextDecoder().decode(record.data[0]);
+      if (qname === host) assert.ok(text.includes(host));
+      else assert.equal(text, "Four.");
+    }
+  }
+  assert.deepEqual(prompts, ["two plus two"]);
+});

@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "wrangler dev",
-    "dev:llm": "wrangler dev --env llm --port 8788",
+    "dev:llm": "wrangler dev --env llm --port 8788 --var ASK_NAME:ask.example.test",
     "check": "wrangler types && tsc --noEmit",
     "test": "node --test test/*.test.ts",
     "build": "wrangler deploy --env=\"\" --dry-run --outdir dist",

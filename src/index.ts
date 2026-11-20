@@ -4,7 +4,7 @@ import { createLookup } from "./ask.ts";
 // Consume split prefixes, split bodies and multiple frames in the same read.
 // Only allocate the declared body once, and await each write for backpressure.
 async function connect(socket: Socket, env: Env) {
-  const lookup = createLookup(env.AI);
+  const lookup = createLookup(env.AI, env.ASK_NAME);
   const reader = socket.readable.getReader();
   const writer = socket.writable.getWriter();
   let timer: ReturnType<typeof setTimeout> | null = null;

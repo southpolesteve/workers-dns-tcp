@@ -1,7 +1,6 @@
 import type { Packet, RecordType } from "@portable/dns-packet";
 import { authority, origin } from "./zone.ts";
 
-const askName = `ask.${origin}`;
 const model = "@cf/google/gemma-4-26b-a4b-it";
 
 // One TXT RR can contain several character-strings of at most 255 octets.
@@ -36,13 +35,14 @@ async function ask(ai: Ai, name: string, question: string): Promise<Packet> {
   return { rcode: "SERVFAIL" };
 }
 
-export function createLookup(ai?: Ai) {
+export function createLookup(ai?: Ai, askName = `ask.${origin}`) {
   if (!ai) return authority;
+  askName = askName.toLowerCase().replace(/\.$/, "");
+  const suffix = `.${askName}`;
   return (name: string, type: RecordType): Packet | Promise<Packet> => {
     if (name === askName && type === "TXT") {
       return txtAnswer(name, `Ask TXT <question-with-hyphens>.${askName}. Use one label, up to 63 ASCII characters.`);
     }
-    const suffix = `.${askName}`;
     if (name !== askName && !name.endsWith(suffix)) return authority(name, type);
     const label = name.slice(0, -suffix.length);
     if (name !== askName && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(label)) return authority(name, type);

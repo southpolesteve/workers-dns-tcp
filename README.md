@@ -75,10 +75,10 @@ npm run test:tcp  # With npm run dev running, exercise real loopback TCP connect
 
 ## Expose the TCP endpoint
 
-1. Set your Worker name in [wrangler.jsonc](wrangler.jsonc). Sign in with `npx wrangler login`. Run `npm run deploy` for the static DNS server, or `npx wrangler deploy --env llm` for the AI-enabled Worker (`workers-dns-tcp-llm` by default).
+1. Set your Worker name in [wrangler.jsonc](wrangler.jsonc). For the AI demo, set `env.llm.vars.ASK_NAME` to the DNS name under which clients will ask questions. The local `dev:llm` script overrides it with `ask.example.test`. Sign in with `npx wrangler login`. Run `npm run deploy` for the static DNS server, or `npx wrangler deploy --env llm` for the AI-enabled Worker (`workers-dns-tcp-llm` by default).
 2. In the same account, open **Spectrum** for a Cloudflare-authoritative zone. On Pro or Business, create a **Workers (tcp)** application. With Spectrum Enterprise, create a **TCP** application and select **Worker** as the origin.
 3. Choose a hostname in that zone, select the deployed Worker, and set a single edge port, such as TCP 53 for plain DNS. Use passthrough with edge TLS termination off. The local listener port is independent of the Spectrum edge port.
-4. Query the Spectrum hostname from another machine. For example, with the bundled zone and edge port 53, run `dig +tcp +norecurse @dns.your-domain.example www.example.test A` after replacing the server hostname.
+4. Query the Spectrum hostname from another machine. For example, with `ASK_NAME=ask.your-domain.example` and edge port 53, run `dig +tcp +short +time=15 +tries=1 @ask.your-domain.example why-is-the-sky-blue.ask.your-domain.example TXT`. Naming the server explicitly directs the DNS connection to the Worker.
 
 Worker origins are in public beta. Pro and Business zones without Spectrum Enterprise allow one Worker-origin app on one TCP port per zone. Free zones are ineligible. A Workers deployment alone does not provision the public TCP hostname. [Spectrum setup and plan requirements](https://developers.cloudflare.com/spectrum/how-to/route-tcp-traffic-to-a-worker/)
 

@@ -9,6 +9,7 @@
   "env": {
     "llm": {
       "name": "workers-dns-tcp-llm",
+      "vars": { "ASK_NAME": "ask.southpolesteve.com" },
       "ai": { "binding": "AI", "remote": true },
       "connect": [{ "protocol": "tcp", "address": "127.0.0.1", "port": 5354 }]
     }
